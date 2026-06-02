@@ -4,9 +4,11 @@ from supabase import create_client, Client
 
 app = Flask(__name__)
 
-# Connect to Supabase using Environment Variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# Fetch environment variables safely
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "").strip()
+
+# Initialize client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/')
@@ -17,15 +19,23 @@ def index():
 def save_name():
     name_to_save = request.form.get('username')
     if name_to_save:
-        # Insert name into Supabase table
-        supabase.table('names').insert({"name": name_to_save}).execute()
+        try:
+            # Explicitly target the table and insert data
+            supabase.table('names').insert({"name": name_to_save}).execute()
+        except Exception as e:
+            print(f"Error saving data: {e}")
     return redirect(url_for('index'))
 
 @app.route('/show', methods=['GET'])
 def show_names():
-    # Fetch all records from Supabase
-    response = supabase.table('names').select('*').execute()
-    all_names = response.data
+    try:
+        # Fetch records safely
+        response = supabase.table('names').select('name').execute()
+        all_names = response.data if response.data else []
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        all_names = [{"name": f"Error loading names: {e}"}]
+        
     return render_template('index.html', names=all_names)
 
 if __name__ == '__main__':
