@@ -25,7 +25,6 @@ def save_name():
         except Exception as e:
             print(f"Error saving data: {e}")
     return redirect(url_for('index'))
-
 @app.route('/show', methods=['GET'])
 def show_names():
     try:
